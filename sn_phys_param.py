@@ -166,10 +166,8 @@ def weighted_mean(tarr):
 	
 	weights = np.array([1./x[1]**2 for x in tarr])
 	vals = np.array([x[0] for x in tarr])
-	
-	pdb.set_trace()
-	
-	return (np.sum(vals*weights)/np.sum(weights), 1./np.sum(weights))
+		
+	return np.array([np.sum(vals*weights)/np.sum(weights), 1./np.sum(weights)])
 
 
 def main():
@@ -231,13 +229,15 @@ def main():
 		final['ke'].append(kinetic_energy(new_sn, ref))
 		final['ni'].append(nickel_mass(new_sn, ref))
 		
-	print final['mass']
-	print final['ke']
-	print final['ni']
+	#print final['mass']
+	#print final['ke']
+	#print final['ni']
 	
-	print weighted_mean(final['mass'])
-	print weighted_mean(final['ke'])
-	print weighted_mean(final['ni'])
+	print np.around(weighted_mean(final['mass']), decimals=1)
+	print np.around(weighted_mean(final['ke']), decimals=1)
+	print np.around(weighted_mean(final['ni']), decimals=3)
+	
+	
 	
 		
 		
