@@ -17,15 +17,15 @@ def locate(x, a):
 
 
 def int_flux(ww, ff, tw, tf):
-    a1 = locate(ww, min(tw))
-    a2 = locate(ww, max(tw))
-    wcut = ww[a1:a2]
-    fcut = ff[a1:a2]
-    t = interpolate.splrep(tw, tf, s=0)
-    tfint = interpolate.splev(wcut, t, der=0)
-    fluxtrans = np.multiply(fcut, tfint)
-    return simps(fluxtrans, wcut)
-
+	a1 = locate(ww, min(tw))
+	a2 = locate(ww, max(tw))
+	wcut = ww[a1:a2]
+	fcut = ff[a1:a2]
+	t = interpolate.splrep(tw, tf, s=0)
+	tfint = interpolate.splev(wcut, t, der=0)
+	fluxtrans = np.multiply(fcut, tfint)
+	return simps(fluxtrans, wcut)
+    	
 class Supernova(object):
     
 	__doc__ = "Supernova class"
@@ -53,6 +53,7 @@ class Supernova(object):
 		self.ni = float('nan')
 		self.ni_err = float('nan')
 		
+		
 
 		
 		if allparams == True:
@@ -63,44 +64,29 @@ class Supernova(object):
 			self.ke_err = float(vals[14])
 			self.ni = float(vals[15])
 			self.ni_err = float(vals[16])
+			
+	def mag_to_lum(self, filterfile = '', vegazpt = 0.0):
+			
+		if self.filt == 'bol':
+		
+			self.luminosity = 3.839e33 * 10.0**((4.75 - self.lc_max)/2.5)
+			self.luminosity_err = np.sqrt((self.luminosity * np.log(10.)/2.5)**2 * self.lc_max_err**2) 
+		
+		else:
+		
+			vega = np.genfromtxt('vega.dat', unpack = True, dtype = None)
+		    	
+			trans = np.genfromtxt(filterfile, unpack = True, dtype = None)
+			vegaflux = int_flux(vega[0], vega[1], trans[0], trans[1])
+			flux = vegaflux * 10.0 **(-(self.lc_max - vegazpt)/2.5)
+			flux_err = np.sqrt( (flux * np.log(10.)/-2.5)**2 * self.lc_max_err**2)
+		    	
+			self.luminosity = 4.0 * np.pi * (self.distance * 1e6 * 3.086e18)**2 * flux
+			self.luminosity_err = np.sqrt( (4.0 * np.pi * (self.distance * 1e6 * 3.086e18)**2)**2 * flux_err**2)
+			
+        		
+		return
 
-		
-		
-		
-	
-class Bolometric(Supernova):
-	
-	__doc__="Bolometric sub-class of Supernova"
-	
-	def mag_to_bol(self):
-    	
-	 	#turn bolometric mag to luminosity (ergs/s)
-	 	self.luminosity = 3.839e33 * 10.0**((4.75 - self.lc_max)/2.5)
-	 	self.luminosity_err = np.sqrt((self.luminosity * np.log(10.)/2.5)**2 * self.lc_max_err**2) 
-	 	
-		return
-	
-            
-class Monochromatic(Supernova):
-	
-	__doc__ = "Monochromatic LC sub-class"
-	
-	def mag_to_lum(self, filterfile, vegazpt):                                                                                                                            
-		#first need Vega and filter
-    	
-		vega = np.genfromtxt('vega.dat', unpack = True, dtype = None)
-		
-		trans = np.genfromtxt(filterfile, unpack = True, dtype = None)
-		
-		vegaflux = int_flux(vega[0], vega[1], trans[0], trans[1])
-		flux = vegaflux * 10.0 **(-(self.lc_max - vegazpt)/-2.5)
-		flux_err = np.sqrt( (flux * np.log(10.)/-2.5)**2 * self.lc_max_err**2)
-		
-		self.luminosity = 4.0 * np.pi * (self.distance * 1e6 * 3.086e18)**2 * flux
-		self.luminosity_err = np.sqrt( (4.0 * np.pi * (self.distance * 1e6 * 3.086e18)**2)**2 * flux_err**2)
-	    	
-		return
-	    
 def ejecta_mass(new, comp):
 	    
 	mass = new.lc_width**2 * new.velocity / (comp.lc_width**2 * comp.velocity) * comp.mej
@@ -111,6 +97,7 @@ def ejecta_mass(new, comp):
 	#velocity terms
 	e4 = ((new.lc_width/comp.lc_width)**2 * 1./comp.velocity * comp.mej)**2 * new.velocity_err**2
 	e5 = ((new.lc_width/comp.lc_width)**2 * (new.velocity/(comp.velocity)**2)*comp.mej)**2 * comp.velocity_err**2
+		
 	error = np.sqrt(e1 + e2 + e3 + e4 + e5)
 	return (mass, error)
 	
@@ -126,7 +113,7 @@ def kinetic_energy(new, comp):
 	e4 = ((new.lc_width/comp.lc_width)**2 * 3./comp.velocity * (new.velocity/comp.velocity)**2.*comp.ke)**2 * comp.velocity_err**2
 	
 	e5 = ((new.lc_width/comp.lc_width)**2 * -3.0/new.velocity * (new.velocity/(comp.velocity)**4)*comp.ke)**2 * comp.velocity_err**2
-	
+		
 	error = np.sqrt(e1 + e2 + e3 + e4 + e5)
 	return (ke, error)
 	
@@ -147,7 +134,7 @@ def nickel_mass(new, comp):
     	
     	
 	mass = comp.ni * new.luminosity / comp.luminosity  * f2 / f1
-    	
+	    	
 	e1 = (new.luminosity / comp.luminosity * f1 / f2)**2 * comp.ni_err**2
     	
 	e2 = (comp.ni/comp.luminosity * f1 / f2)**2 * new.luminosity_err**2
@@ -176,6 +163,7 @@ def main():
 	parser.add_argument('filename', type = str, help = 'Input file')
 	parser.add_argument("-f", "--filter", type = str, help = 'Path to filter if not using bol')
 	parser.add_argument("-z", "--zeropt", type = float, default = 0.0, help = 'Magntiude of Vega in this band.  Default = 0.0')
+	parser.add_argument("-v", "--verbose", action = "store_true", help = "Verbose output for each analogue")
 	
 	args = vars(parser.parse_args())
 	
@@ -188,19 +176,15 @@ def main():
 	
 	#the first line of file MUST be the new supernova
 	
-	phot_type = lines[0].split()[2]
-	
-	new_sn = Supernova(lines[0])
-	
-	if phot_type == 'bol':
+	new_sn = Supernova(lines[0], allparams = False)
 		
-		new_sn = Bolometric(lines[0], allparams = False)
-		new_sn.mag_to_bol()
+	if new_sn.filt == 'bol':
+		
+		new_sn.mag_to_lum()
 		
 	else:
 		
-		new_sn = Monochromatic(lines[0], allparams = False)
-		new_sn.mag_to_lum(args['filter'], args['zeropt'])
+		new_sn.mag_to_lum(filterfile = args['filter'], vegazpt = args['zeropt'])
 		
 			
 	n_comp = np.size(lines) - 1
@@ -210,29 +194,34 @@ def main():
 	for i in np.arange(n_comp):
 		
 		arr = lines[i+1]
-				
-		type = arr.split()[2]
+						
+		ref = Supernova(arr, allparams = True)
 		
-		ref = Supernova(arr)
-		
-		if type == 'bol':
+		if ref.filt == 'bol':
 			
-			ref = Bolometric(arr, allparams = True)
-			ref.mag_to_bol()
+			ref.mag_to_lum()
 			
 		else:
 		
-			ref = Monochromatic(arr, allparams = True)
-			ref.mag_to_lum(args['filter'], args['zeropt'])
+			ref.mag_to_lum(filterfile = args['filter'], vegazpt = args['zeropt'])
+			
+		tmp_mass = ejecta_mass(new_sn, ref)
+		tmp_ke = kinetic_energy(new_sn, ref)
+		tmp_ni = nickel_mass(new_sn, ref)
 						
-		final['mass'].append(ejecta_mass(new_sn, ref))
-		final['ke'].append(kinetic_energy(new_sn, ref))
-		final['ni'].append(nickel_mass(new_sn, ref))
+		final['mass'].append(tmp_mass)
+		final['ke'].append(tmp_ke)
+		final['ni'].append(tmp_ni)
 		
-	#print final['mass']
-	#print final['ke']
-	#print final['ni']
-	
+		if args['verbose']:
+			
+			print "{0}".format(ref.name)
+			print "Ejecta Mass:\t{0} +/- {1}".format(tmp_mass[0], tmp_mass[1])
+			print "KE:\t\t {0} +/- {1}".format(tmp_ke[0], tmp_ke[1])
+			print "Nickel Mass:\t{0} +/- {1}".format(tmp_ni[0], tmp_ni[1])
+			print "\n"
+		
+	print 'WEIGHTED VALUES'
 	print np.around(weighted_mean(final['mass']), decimals=1)
 	print np.around(weighted_mean(final['ke']), decimals=1)
 	print np.around(weighted_mean(final['ni']), decimals=3)
