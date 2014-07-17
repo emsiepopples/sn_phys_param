@@ -1,0 +1,7 @@
+###############################################
+# name distance filter lc_width lc_width_err lc_max lc_max_err, vel, vel_err, rise, rise_err (eject, eject_err, ke, ke_err, ni, ni_err)
+PTF10qts	415	bol	16.8	1	-18.6	0.1	17000	1500	13.4	2.3
+###############################################
+# ADD ANALOGUES PLUS EXTRA PARAMS BELOW THIS LINE
+SN1998bw	35.8	bol	21.7	0.5	-18.6	0.1	20000	1000	15	0.0	10	1	50	10	0.43	0.05
+SN2006aj	143		bol	16.6	0.5	-18.1	0.1	16000	1000	9.6	0.0	1.8	0.8	2	1	0.2	0.04
